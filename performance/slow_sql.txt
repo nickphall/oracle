@@ -1,0 +1,33 @@
+## Run TOP to find pid of Oracle process causing high cpu
+
+## Run this query ith PID from above
+select a.username, a.osuser, a.status, a.machine, a.sid, a.serial#,
+       to_char(a.logon_time, 'YYYY-MM-DD HH24:MI:SS') "LOGIN", 
+       a.module, a.action, a.client_info
+  from v$session a, v$process b
+where a.paddr = b.addr   
+   and a.username is not null
+   and b.spid =[input from top pid]
+order by logon_time;
+
+## Run this query with SID from above query
+select sid, username, sql_text stext
+  from v$session s, v$sqltext t
+where s.sql_address = t.address
+   and s.sql_hash_value = t.hash_value
+   and s.sid = 009
+order by SID, piece asc
+;
+
+
+=====================================================================================
+
+
+SELECT s.username, s.osuser, s.machine, t.sql_text
+FROM v$session s
+  JOIN v$process p ON s.paddr = p.addr
+  JOIN v$sqltext t ON s.sql_address = t.address
+  JOIN v$sqltext t1 ON s.sql_hash_value = t1.hash_value
+WHERE s.username is not null
+AND p.spid = 009
+;
