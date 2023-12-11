@@ -1,1 +1,114 @@
+SELECT
+   s.blocking_session, 
+   s.sid, 
+   s.serial#, 
+   s.seconds_in_wait,
+FROM
+   v$session s
+WHERE
+   blocking_session IS NOT NULL;
 
+SELECT sql_fulltext
+FROM v$sql
+WHERE sql_id = '4jsadfbaz420p'
+;
+
+select s.sid
+      ,s.serial#
+      ,s.username
+      ,s.machine
+      ,s.status
+      ,s.lockwait
+      ,t.used_ublk
+      ,t.used_urec
+      ,t.start_time
+from v$transaction t
+inner join v$session s on t.addr = s.taddr;
+
+
+SELECT 
+   l1.sid || ' is blocking ' || l2.sid blocking_sessions
+FROM 
+   v$lock l1, v$lock l2
+WHERE
+   l1.block = 1 AND
+   l2.request > 0 ANDSELECT sid, id1 FROM v$lock WHERE TYPE='TM';
+SELECT object_name FROM dba_objects WHERE object_id=51387;
+   l1.id1 = l2.id1 AND
+   l1.id2 = l2.id2;
+   
+
+
+
+select session_id "sid",SERIAL#  "Serial",
+substr(object_name,1,20) "Object",
+  substr(os_user_name,1,10) "Terminal",
+  substr(oracle_username,1,10) "Locker",
+  nvl(lockwait,'active') "Wait",
+  decode(locked_mode,
+    2, 'row share',
+    3, 'row exclusive',
+    4, 'share',
+    5, 'share row exclusive',
+    6, 'exclusive',  'unknown') "Lockmode",
+  OBJECT_TYPE "Type"
+FROM
+  SYS.V_$LOCKED_OBJECT A,
+  SYS.ALL_OBJECTS B,
+  SYS.V_$SESSION c
+WHERE
+  A.OBJECT_ID = B.OBJECT_ID AND
+  C.SID = A.SESSION_ID
+ORDER BY 1 ASC, 5 Desc
+/
+
+SELECT level,
+       LPAD(' ', (level-1)*2, ' ') || NVL(s.username, '(oracle)') AS username,
+       s.osuser,
+       s.sid,
+       s.serial#,
+       s.lockwait,
+       s.status,
+       s.module,
+       s.machine,
+       s.program,
+       TO_CHAR(s.logon_Time,'DD-MON-YYYY HH24:MI:SS') AS logon_time
+FROM   v$session s
+WHERE  level > 1
+OR     EXISTS (SELECT 1
+               FROM   v$session
+               WHERE  blocking_session = s.sid)
+CONNECT BY PRIOR s.sid = s.blocking_session
+START WITH s.blocking_session IS NULL;
+
+select table_name, comments 
+  from dict
+ where upper(table_name) like upper('%&table_name%');
+ 
+ select * from v$session where sid in (1706,1848);
+
+
+
+select s1.username || '@' || s1.machine
+ || ' ( SID=' || s1.sid || ' )  is blocking '
+ || s2.username || '@' || s2.machine || ' ( SID=' || s2.sid || ' ) ' AS blocking_status
+from v$lock l1, v$session s1, v$lock l2, v$session s2
+where s1.sid=l1.sid and s2.sid=l2.sid
+and l1.BLOCK=1 and l2.request > 0
+and l1.id1 = l2.id1
+and l2.id2 = l2.id2 ;
+
+
+SELECT a.inst_id,
+status,
+username,
+machine,
+event,
+blocking_session,
+sql_id,
+last_call_et,
+status,
+'alter system kill session ''' || a.sid || ',' || serial# || ''';'
+FROM gv$access a, gv$session b
+WHERE a.inst_id = b.inst_id AND a.sid = b.sid
+AND object = 'EV_MAESTRO_VANGUARD';
